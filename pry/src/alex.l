@@ -23,7 +23,7 @@ entero         {digito}+
 flotante       {entero}*[.]{entero}+|{entero}+[.]{entero}*
 letra          [a-zA-Z]
 variable       {letra}({letra}{digito}[_])*
-comentario     \/\/.*\n
+comentario     \/\/.*$
 
 %%
 {delimitador}   { if (verbosidad) ECHO; }
