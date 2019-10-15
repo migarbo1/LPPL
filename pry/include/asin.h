@@ -76,18 +76,17 @@ extern int yydebug;
     OR_ = 286,
     INT_ = 287,
     FLOAT_ = 288,
-    VARIABLE_ = 289,
-    ID_ = 290,
-    CTE_ = 291,
-    STRUCT_ = 292,
-    BOOL_ = 293,
-    READ_ = 294,
-    PRINT_ = 295,
-    IF_ = 296,
-    ELSE_ = 297,
-    WHILE_ = 298,
-    TRUE_ = 299,
-    FALSE_ = 300
+    ID_ = 289,
+    CTE_ = 290,
+    STRUCT_ = 291,
+    BOOL_ = 292,
+    READ_ = 293,
+    PRINT_ = 294,
+    IF_ = 295,
+    ELSE_ = 296,
+    WHILE_ = 297,
+    TRUE_ = 298,
+    FALSE_ = 299
   };
 #endif
 

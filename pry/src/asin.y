@@ -10,7 +10,7 @@
 %token MAS_ INCR_ MASIG_ MENOS_ DECR_ MENIG_ EXCL_ POR_ PORIG_ DIV_ DIVIG_ RESTO_ IGU_
 %token APAR_ CPAR_ ACOR_ CCOR_ ALLAV_ CLLAV_ PUNTO_ PYC_
 %token MENOR_ MAYOR_ MEIG_ MAIG_ IGUALC_ DIF_ AND_ OR_
-%token INT_ FLOAT_ VARIABLE_
+%token INT_ FLOAT_
 %token ID_ CTE_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
 %%
@@ -99,7 +99,7 @@ expresionMultiplicativa     : expresionUnaria
 
 expresionUnaria             : expresionSufija
                             | operadorUnario expresionUnaria
-                            |operadorIncremento ID_
+                            | operadorIncremento ID_
                             ;
 
 expresionSufija             : APAR_ expresion CPAR_

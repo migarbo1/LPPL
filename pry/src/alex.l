@@ -22,13 +22,13 @@ digito         [0-9]
 entero         {digito}+
 flotante       {entero}*[.]{entero}+|{entero}+[.]{entero}*
 letra          [a-zA-Z]
-variable       {letra}({letra}{digito}[_])*
+variable       {letra}({letra}|{digito}|[_])*
 comentario     \/\/.*$
 
 %%
 {delimitador}   { if (verbosidad) ECHO; }
 {comentario}	  { if (verbosidad) ECHO; } /*preguntar*/
-"."             {retornar (PUNTO_);     }
+"."             { retornar (PUNTO_);    }
 "+"	            { retornar (MAS_);      }
 "++"	        	{ retornar (INCR_);     }
 "+="            { retornar (MASIG_);    }
@@ -57,10 +57,8 @@ comentario     \/\/.*$
 "!="		        { retornar (DIF_);      }
 "&&"		        { retornar (AND_);      }
 "||"		        { retornar (OR_);       }
-{entero}        { retornar (INT_);      }
+{entero}        { retornar (CTE_);      }
 {flotante}	    { retornar (FLOAT_);    }
-id		          { retornar (ID_);       }
-cte		          { retornar (CTE_);      }
 struct	        { retornar (STRUCT_);   }
 int		          { retornar (INT_);      }
 bool		        { retornar (BOOL_);     }
@@ -71,7 +69,7 @@ else		        { retornar (ELSE_);     }
 while		        { retornar (WHILE_);    }
 true		        { retornar (TRUE_);     }
 false		        { retornar (FALSE_);    }
-{variable}	    { retornar (VARIABLE_); }
+{variable}		  { retornar (ID_);       }
 .	       { yyerror("Caracter desconocido"); }
 
 %%
