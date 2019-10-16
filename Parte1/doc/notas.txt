@@ -1,0 +1,42 @@
+yylval() es un metodo que te devuelve el atributo del simbolo que está en la cima de la pila. (pivote)
+para los terminales%token<atrbuto> Simbolo
+para los no terminales es: %type<atributo> simboloNoTeminal
+--hasta aqui la parte léxica
+
+%union{ //esto va al fichero de cabecera
+	atributos
+} 
+
+ex: {yylval.cent=atoi(yytext); return(CTE_);}
+donde atoi devuelve el numero entero asociado ala cadena leida "123" = 123 y yytext tiene el valor de lo que se he analizado.
+fac != fuck :( sadboy
+
+para simbolos no terminales: exp: fac OPMULT_ CTE_ {$$ = $1 * $3} donde $1 es el primer elemento(fac) y $3 el tercer elemento (CTE_) 
+----
+si el atributo es un struct habria que declarar en union un struct con los tipos y luego instanciarlo:
+	%union{
+		struct {int tipo;
+			int val;} texp
+	}
+.
+.
+.
+%type <texp> exp fact
+exp: fact OPMULT_ CTE_ {$$.val = $1.val * $3; 
+			$$.tipo = tentero }
+-----------
+las que son de propagación (NT -> NT) tienen forma $$ = $1; siendo esto la forma especifica de propagación.
+
+
+en el ejemplo de bison en el axioma hay un print con el resultado. checkear luego.
+
+si hay problema con los identificadores ($n) mirar esto
+si metemos codigo en medio de una regla hay que contar como si fuese una atributo:
+ A -> B {alpha} C {betta}
+
+ A -> B @1 C {betta}
+ @1 -> epsilon {alpha}  
+ 
+ A -> B{$$ = $1 * 10;}C{$$ = $2 + $3}
+ //con tipos
+ A -> B{$<cent>$ = $1 * 10;}C{$$ = $<cent>2 + $3}
