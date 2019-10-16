@@ -58,7 +58,7 @@ comentario     \/\/.*$
 "&&"		        { retornar (AND_);      }
 "||"		        { retornar (OR_);       }
 {entero}        { retornar (CTE_);      }
-{flotante}	    { retornar (FLOAT_);    }
+{flotante}	    { retornar (CTE_);    } /* aunque aceptas enteros y flotantes los tratas todos como enteros. hay que hacer la diferenciacion y truncarlos */
 struct	        { retornar (STRUCT_);   }
 int		          { retornar (INT_);      }
 bool		        { retornar (BOOL_);     }
