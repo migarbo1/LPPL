@@ -57,8 +57,8 @@ comentario     \/\/.*$
 "!="		        { retornar (DIF_);      }
 "&&"		        { retornar (AND_);      }
 "||"		        { retornar (OR_);       }
-{entero}        { retornar (CTE_);      }
-{flotante}	    { retornar (CTE_);    } /* aunque aceptas enteros y flotantes los tratas todos como enteros. hay que hacer la diferenciacion y truncarlos */
+{entero}        { yylval.cent = atoi(yytext); retornar (CTE_);      }
+{flotante}	    { yylval.cent = atoi(yytext); retornar (CTE_);      } /* aunque aceptas enteros y flotantes los tratas todos como enteros. hay que hacer la diferenciacion y truncarlos */
 struct	        { retornar (STRUCT_);   }
 int		          { retornar (INT_);      }
 bool		        { retornar (BOOL_);     }
@@ -69,7 +69,7 @@ else		        { retornar (ELSE_);     }
 while		        { retornar (WHILE_);    }
 true		        { retornar (TRUE_);     }
 false		        { retornar (FALSE_);    }
-{variable}		  { retornar (ID_);       }
+{variable}		  { yyval.ident = strdup(yytext);retornar (ID_);       }
 .	       { yyerror("Caracter desconocido"); }
 
 %%

@@ -7,28 +7,42 @@
 #include "header.h"
 %}
 
+%union{
+    int cent;
+    char *ident;
+}
+
 %token MAS_ INCR_ MASIG_ MENOS_ DECR_ MENIG_ EXCL_ POR_ PORIG_ DIV_ DIVIG_ RESTO_ IGU_
 %token APAR_ CPAR_ ACOR_ CCOR_ ALLAV_ CLLAV_ PUNTO_ PYC_
 %token MENOR_ MAYOR_ MEIG_ MAIG_ IGUALC_ DIF_ AND_ OR_
-%token INT_
+%token <cent> INT_
 %token ID_ CTE_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
 %%
 programa                    : ACOR_ secuenciaSentencias CCOR_
+                            { $$ = $1; }
                             ;
 
 secuenciaSentencias         : sentencia
+                                { $$ = $1; }
                             | secuenciaSentencias sentencia
+                                {  }
                             ;
 
 sentencia                   : declaracion
+                                {  }
                             | instruccion
+                                {  }
                             ;
 
 declaracion                 : tipoSimple ID_ PYC_
+                                {  }
                             | tipoSimple ID_ IGU_ constante PYC_
+                                {  }
                             | tipoSimple ID_ ALLAV_ CTE_ CLLAV_ PYC_
+                                {  }
                             | STRUCT_ ACOR_ listaCampos CCOR_ ID_ PYC_
+                                {  }
                             ;
 
 /*****************************************************************************/
@@ -113,8 +127,11 @@ expresionSufija             : APAR_ expresion CPAR_
 /*****************************************************************************/
 
 constante                   : CTE_
+                                {$$ = cte.val;}
                             | TRUE_
+                                {$$ = 1;}
                             | FALSE_
+                                {$$ = 0;}
                             ;
 
 /*****************************************************************************/
