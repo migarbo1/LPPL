@@ -20,7 +20,7 @@
 
 %%
 programa                    : ACOR_ secuenciaSentencias CCOR_
-                            { $$ = $1; }
+                                { $$ = $1; }
                             ;
 
 secuenciaSentencias         : sentencia
@@ -48,12 +48,20 @@ declaracion                 : tipoSimple ID_ PYC_
 /*****************************************************************************/
 
 tipoSimple                  : INT_
+                                { $$ = T_ENTERO; }
                             | BOOL_
+                                { $$ = T_LOGICO; }
                             ;
 
 listaCampos                 : tipoSimple ID_ PYC_
+                                /*{ $$.tipo = $1.tipo (*) $1.ident;  }*/
+                                {$$.tipo = T_ERROR;
+                                 obtTdS($2.ident)
+                                 if($2.tipo == T_ERROR){ $$.tipo = $1.tipo (*) $1.ident; }
+                                }
                             | listaCampos tipoSimple ID_ PYC_
-                            ;
+                                {  }
+                        
 
 instruccion                 : ACOR_ CCOR_
                             | ACOR_ listaInstrucciones CCOR_
