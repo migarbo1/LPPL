@@ -36,13 +36,47 @@ sentencia                   : declaracion
                             ;
 
 declaracion                 : tipoSimple ID_ PYC_
-                                {  }
+                                { if( !insTdS($2, $1, dvar, refe) ){
+                                  yyerror("identificador repetido");
+                                 }
+                                 else dvar += TALLA_TIPO_SIMPLE;
+                                }
+
                             | tipoSimple ID_ IGU_ constante PYC_
-                                {  }
+                                { if( !(insTdS($2, $1,dvar, -1))) {
+                                    yyerror("identificador repetido");
+                                  }
+                                  else if ($4.tipo == $1){
+                                    yyerror("error de asignación de tipos");
+                                  }
+                                  else dvar += TALLA_TIPO_SIMPLE;
+                                }
+
                             | tipoSimple ID_ ALLAV_ CTE_ CLLAV_ PYC_
-                                {  }
+                                { int numelem = $4;
+                                  if ($4 <=0){
+                                    yyerror("Talla inapropiada del array");
+                                    numelem = 0;
+                                  }
+                                  int refe = insTdA($1,numelem);
+                                  if( !insTdS($2, T_ARRAY, dvar, refe) ){
+                                    yyerror("identificador repetido");
+                                  }
+                                  else dvar += numelem * TALLA_TIPO_SIMPLE;
+                                 }
+
                             | STRUCT_ ACOR_ listaCampos CCOR_ ID_ PYC_
-                                {  }
+                                { int ncamp = listaCampos.talla /* no se como hacer esto, pero se que es +- asi*/
+                                  int refe = insTdR(-1, $5, T_RECORD, dvar);
+                                  if (refe == -1){
+                                    yyerror("repetición de un campo en el registro");
+                                  }
+                                  else
+                                    if( !insTdS($5, T_RECORD, dvar, refe) ){
+                                      yyerror("identificador repetido");
+                                    }
+                                    else dvar += ncamp * TALLA_TIPO_SIMPLE;
+                                }
                             ;
 
 /*****************************************************************************/
@@ -61,7 +95,7 @@ listaCampos                 : tipoSimple ID_ PYC_
                                 }
                             | listaCampos tipoSimple ID_ PYC_
                                 {  }
-                        
+
 
 instruccion                 : ACOR_ CCOR_
                             | ACOR_ listaInstrucciones CCOR_
@@ -95,6 +129,15 @@ instruccionExpresion        : expresion PYC_
 
 expresion                   : expresionLogica
                             | ID_ operadorAsignacion expresion
+                              { $$.tipo = T_ERROR;
+                                SIMB sim = obtTdS($1);
+                                if(sim.tipo == T_ERROR) yyerror("Objeto no declarado");
+                                else if (! ((sim.tipo == $3 == T_ENTERO) ||
+                                            (sim.tipo == $3 == T_LOGICO)))
+                                      yyerror("Error de tipos en la 'instruccion de asignación'");
+                                else $$.tipo = sim.tipo;
+                              }
+
                             | ID_ ALLAV_ expresion CLLAV_ operadorAsignacion expresion
                             | ID_ PUNTO_ ID_ operadorAsignacion expresion
                             ;
@@ -135,11 +178,17 @@ expresionSufija             : APAR_ expresion CPAR_
 /*****************************************************************************/
 
 constante                   : CTE_
-                                {$$ = cte.val;}
+                                { $$ = $1;
+                                  $$.tipo = T_ENTERO;
+                                }
                             | TRUE_
-                                {$$ = 1;}
+                                { $$ = 1;
+                                  $$.tipo = T_LOGICO;
+                                }
                             | FALSE_
-                                {$$ = 0;}
+                                { $$ = 0;
+                                  $$.tipo = T_LOGICO;
+                                }
                             ;
 
 /*****************************************************************************/
