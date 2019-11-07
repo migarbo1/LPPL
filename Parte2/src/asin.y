@@ -66,7 +66,9 @@ declaracion                 : tipoSimple ID_ PYC_
                                  }
 
                             | STRUCT_ ACOR_ listaCampos CCOR_ ID_ PYC_
-                                { int ncamp = listaCampos.talla /* no se como hacer esto, pero se que es +- asi*/
+                                { 
+                                  
+                                  int ncamp = listaCampos.talla /* no se como hacer esto, pero se que es +- asi*/
                                   int refe = insTdR(-1, $5, T_RECORD, dvar);
                                   if (refe == -1){
                                     yyerror("repetición de un campo en el registro");
@@ -84,6 +86,7 @@ declaracion                 : tipoSimple ID_ PYC_
 tipoSimple                  : INT_
                                 { $$ = T_ENTERO; }
                             | BOOL_
+                            
                                 { $$ = T_LOGICO; }
                             ;
 
