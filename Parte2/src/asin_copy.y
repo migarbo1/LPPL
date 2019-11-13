@@ -15,6 +15,23 @@
       int valor;
       char *ident;
     }Aid*/
+
+    typedef struct{
+      int talla;
+      int ref;
+    } Acampos;
+
+    typedef struct{
+      int tipo;
+      int talla;
+      char *ident;
+      /*int ref;*/
+    }Adec;
+
+    typedef struct{
+      int tipo;
+      int valor;
+    }Acons
 }
 
 %token INCR_ MASIG_  DECR_ MENIG_  PORIG_  DIVIG_ IGU_
@@ -23,49 +40,46 @@
 %left MAS_ MENOS_
 %left POR_ DIV_ RESTO_
 %token <cent> INT_
-%token <ident> ID_ /*Aid*/
+%token <*ident> ID_ /*Aid*/
 %token CTE_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
-%type<cent> constante
 %type <Acampos> listaCampos
+%type <Adec> declaracion
+%type <Acons> constante
 %%
-programa                    : { dvar=0; }
-                              ACOR_ secuenciaSentencias CCOR_
-                              { if (verTDS)  verTdS(); }
+programa                    : ACOR_ secuenciaSentencias CCOR_
+                                { $$ = $1; }
                             ;
 
 secuenciaSentencias         : sentencia
-                                
+                                { $$ = $1; }
                             | secuenciaSentencias sentencia
-                                
+                                {  }
                             ;
 
 sentencia                   : declaracion
                                 {
-                                  if(insTdS($1.ident, $1.tipo, $1.talla, $1.ref))
-                                  {
-                                    dvar += $1.talla;
-                                  }
-                                  else 
-                                  {
-                                    yyerror("Error en declaracion");
+                                  /*SIMB s = obtTdS($1.ident);
+                                  if(s.tipo == T_ERROR){
+                                    insTdS($1.ident, $1.tipo, $1.talla,0) /*¿referencia?*/
                                   }
                                 }
                             | instruccion
-                                
+                                {  }
                             ;
 
 declaracion                 : tipoSimple ID_ PYC_
-                                {  if (insTdS($2, $1, dvar, -1)) {}
-                                  /*if*/
-                                  dvar+=TALLA_TIPO_SIMPLE;
-                                  
+                                {
+                                  $$.ident = $2; /*.ident*/
+                                  $$.tipo = $1;
+                                  $$.talla = TALLA_TIPO_SIMPLE;
+                                  $$.ref = -1;
                                 }
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
                                   if( ! $1.tipo == $4.tipo){
-                                    yyerror("No se pudo realizar la asignacion : Tipos incompatibles");
+                                    yyeror("No se pudo realizar la asignación: tipos incompatibles");
                                   }
                                   $$.tipo = $1;
                                   $$.ident = $2; /*.ident*/
@@ -124,7 +138,7 @@ tipoSimple                  : INT_
                                   $$ = T_LOGICO;
                                 }
                             
-              
+                                { $$ = T_LOGICO; }
                             ;
 
 listaCampos                 : tipoSimple ID_ PYC_
@@ -154,13 +168,6 @@ listaInstrucciones          : instruccion
                             ;
 
 instruccionesEntradaSalida  : READ_ APAR_ ID_ CPAR_ PYC_
-                              {
-                                /*SIMB var = obtTdS($3.ident);
-                                if(var.tipo == T_ERROR) yyerror("Variable no declarada");
-                                  
-                                if(var.tipo != T_ENTERO || var.tipo != T_LOGICO) 
-                                    yyerror("Tipo de variable incompatible");*/
-                              }
                             | PRINT_ APAR_ expresion CPAR_ PYC_
                             ;
 
@@ -178,14 +185,14 @@ instruccionExpresion        : expresion PYC_
 
 expresion                   : expresionLogica
                             | ID_ operadorAsignacion expresion
-                              /*{ $$.tipo = T_ERROR;
+                              { $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1); /*ident*/
                                 if(sim.tipo == T_ERROR) yyerror("Objeto no declarado");
                                 else if (! ((sim.tipo == $3 == T_ENTERO) ||
                                             (sim.tipo == $3 == T_LOGICO)))
                                       yyerror("Error de tipos en la 'instruccion de asignación'");
                                 else $$.tipo = sim.tipo;
-                              }*/
+                              }
 
                             | ID_ ALLAV_ expresion CLLAV_ operadorAsignacion expresion
                             | ID_ PUNTO_ ID_ operadorAsignacion expresion
@@ -228,16 +235,19 @@ expresionSufija             : APAR_ expresion CPAR_
 
 constante                   : CTE_
                                 {
+                                  $$.valor = $1;
                                   $$.tipo = T_ENTERO;
                                 }
 
                             | TRUE_
                                 {
+                                  $$.valor = 1;
                                   $$.tipo = T_LOGICO;
                                 }
 
                             | FALSE_
                                 {
+                                  $$.valor = 0;
                                   $$.tipo = T_LOGICO;
                                 }
                             ;
