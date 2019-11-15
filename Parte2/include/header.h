@@ -27,9 +27,14 @@ extern int verbosidad;                   /* Flag si se desea una traza       */
 extern int numErrores;              /* Contador del numero de errores        */
 
 typedef struct exp{
-  int tipo;
   int desp;
+  int tipo;
 } EXP;
+
+typedef struct registro{
+  int ref;
+  int talla;
+} REGISTRO;
 
 #endif  /* _HEADER_H */
 

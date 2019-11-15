@@ -69,7 +69,7 @@ else		        { retornar (ELSE_);     }
 while		        { retornar (WHILE_);    }
 true		        { retornar (TRUE_);     }
 false		        { retornar (FALSE_);    }
-{variable}		  { yyval.ident = strdup(yytext);retornar (ID_);       }
+{variable}		  { yylval.ident = strdup(yytext);retornar (ID_);       }
 .	       { yyerror("Caracter desconocido"); }
 
 %%
