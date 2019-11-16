@@ -1,0 +1,7 @@
+¿tiene que tener expresión campo desplazamiento?
+
+¿como hacer que los errores que refleja instrucción asignación no se repitan?
+
+¿en instruccionExpresion -> expresion PYC, que se ha de poner, no se deben propagar los valores, no?
+
+

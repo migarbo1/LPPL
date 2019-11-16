@@ -27,6 +27,7 @@
 
 %type <registro> listaCampos
 %type <cent> tipoSimple constante
+%type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
 
 %%
 programa                    :  {dvar = 0;}
@@ -48,7 +49,7 @@ sentencia                   : declaracion
 
 declaracion                 : tipoSimple ID_ PYC_
                                 {
-                                  if( ! insTdS($2, $1, dvar, -1) )
+                                  if( !insTdS($2, $1, dvar, -1) )
                                     yyerror("variable ya definida");
                                   else 
                                     dvar += TALLA_TIPO_SIMPLE;
@@ -56,26 +57,25 @@ declaracion                 : tipoSimple ID_ PYC_
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
-                                  if( ! $1 == $4){
+                                  if( ! $1 == $4)
                                     yyerror("No se pudo realizar la asignación tipos incompatibles");
-                                  }
-                                  if( ! insTdS($2, $1, dvar, -1) )
-                                    yyerror("variable ya definida");
                                   else
-                                    dvar += TALLA_TIPO_SIMPLE;
+                                    if( ! insTdS($2, $1, dvar, -1) )
+                                      yyerror("variable ya definida");
+                                    else
+                                      dvar += TALLA_TIPO_SIMPLE;
                                 }
 
                             | tipoSimple ID_ ALLAV_ CTE_ CLLAV_ PYC_
                                 {
                                   int numelem = $4;
-                                  if ($4 <=0){
+                                  if ($4 <=0)
                                     yyerror("Talla inapropiada del array");
                                     numelem = 0;
-                                  }
                                   int refe = insTdA($1,numelem);
-                                  if( !insTdS($2, T_ARRAY, dvar, refe) ){ /*$2.ident*/
+                                  if( !insTdS($2, T_ARRAY, dvar, refe) )
                                     yyerror("identificador repetido");
-                                  }
+                                  
                                   else dvar += numelem * TALLA_TIPO_SIMPLE;
                                  }
 
@@ -108,8 +108,12 @@ listaCampos                 : tipoSimple ID_ PYC_
 
                             | listaCampos tipoSimple ID_ PYC_
                                 {
-                                  $$.ref = insTdR($1.ref, $3, $2, $1.talla);
-                                  $$.talla = $1.talla + TALLA_TIPO_SIMPLE;
+                                  int ref = insTdR($1.ref, $3, $2, $1.talla);
+                                  if (ref == -1)
+                                    yyerror("campo ya declarado");
+                                  else 
+                                    $$.talla = $1.talla + TALLA_TIPO_SIMPLE;
+                                    $$.ref = ref;
                                 }
 
 /*****************************************************************************/
@@ -125,51 +129,100 @@ instruccion                 : ACOR_ CCOR_
 listaInstrucciones          : instruccion
                             | listaInstrucciones instruccion
                             ;
-
+/*****************************************************************************/
 instruccionesEntradaSalida  : READ_ APAR_ ID_ CPAR_ PYC_
+                              { SIMB simb = obtTdS($3);
+                                if(simb.tipo != T_ENTERO)
+                                  yyerror("no se pueden leer valores no enteros");
+                              }
                             | PRINT_ APAR_ expresion CPAR_ PYC_
+                              { if($3.tipo != T_ERROR)
+                                  if ($3.tipo != T_ENTERO)
+                                    yyerror("no se pueden imprimir valores de tipo no entero");
+                              }
                             ;
 
 instruccionSeleccion        : IF_ APAR_ expresion CPAR_ instruccion ELSE_ instruccion
+                              { if($3.tipo != T_ERROR)
+                                  if($3.tipo != T_LOGICO)
+                                    yyerror("la condición debe ser de tipo lógico");
+                              }
                             ;
 
 instruccionIteracion        : WHILE_ APAR_ expresion CPAR_ instruccion
+                              { if($3.tipo != T_ERROR)
+                                  if($3.tipo != T_LOGICO)
+                                    yyerror("la condición debe ser de tipo lógico");
+                              }
                             ;
 
 instruccionExpresion        : expresion PYC_
+                              {
+                                /*¿$$.tipo $$.desp?*/
+                              }
                             | PYC_
+                              { /*¿$$.tipo = T_VACIO?*/}
                             ;
 
 /*****************************************************************************/
 
+/*tiene expresion desplazamiento?*/
 expresion                   : expresionLogica
+                              {
+                                $$.tipo = $1.tipo; $$.desp = $1.desp;
+                              }
                             | ID_ operadorAsignacion expresion
                               { $$.tipo = T_ERROR;
-                                SIMB sim = obtTdS($1); 
-                                if(sim.tipo == T_ERROR) yyerror("Objeto no declarado");
-                                else if (! ((sim.tipo == $3 == T_ENTERO) ||
-                                            (sim.tipo == $3 == T_LOGICO)))
+                                SIMB simb = obtTdS($1); 
+                                if(simb.tipo == T_ERROR) yyerror("Objeto no declarado");
+                                else if (! ((simb.tipo == $3.tipo == T_ENTERO) || /*si no tiene desplazamiento, $3 solo*/
+                                            (simb.tipo == $3.tipo == T_LOGICO)))  /*si no tiene desplazamiento, $3 solo*/
                                       yyerror("Error de tipos en la 'instruccion de asignación'");
-                                else $$.tipo = sim.tipo;
-                                /*¿desplazamiento?*/
+                                else $$.tipo = simb.tipo;
+                                /*¿desplazamiento? $$:desp = simb.desp*/
                               }
 
                             | ID_ ALLAV_ expresion CLLAV_ operadorAsignacion expresion
-                              { SIMB sim = obtTdS($1);
-                                if (sim.tipo == T_ERROR) yyerror("Array no declarado");
-                                else
-                                  if (sim.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
-                                  else
+                              { SIMB simb = obtTdS($1);
+                                if (simb.tipo == T_ERROR) yyerror("Array no declarado");
+                                else{
+                                  if (simb.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
+                                  else{
                                     if($3.tipo != T_ENTERO) yyerror("Tipo incorrecto de indice de Array");
-                                    else
-                                      DIM dim = obtTdA(sim.ref);
-                                      if (dim.telem != $5.tipo)
+                                    else{
+                                      DIM dim = obtTdA(simb.ref);
+                                      if (dim.telem != $6.tipo)
                                         yyerror("tipo incompatible con los tipos del array");
-                                      else
-                                        $$.tipo = sim.tipo;
-                                        /*¿desplazamiento?*/
+                                      else{
+                                        $$.tipo = dim.telem; /*o simb.tipo, duda*/
+                                        /*¿desplazamiento? $$.desp = simb.desp*/
+                                      }
+                                    }
+                                  }
+                                }
                               }
                             | ID_ PUNTO_ ID_ operadorAsignacion expresion
+                              { SIMB simb = obtTdS($1);
+                                if(simb.tipo == T_ERROR)
+                                  yyerror("identificador no declarado");
+                                else{
+                                  if(simb.tipo != T_RECORD)
+                                    yyerror("no se puede acceder a un campo de un no-registro");
+                                  else{
+                                    CAMP camp = obtTdR(simb.ref, $3);
+                                    if(camp.tipo == T_ERROR)
+                                      yyerror("campo no definido");
+                                    else{
+                                      if(camp.tipo != $5.tipo)
+                                        yyerror("tipo de campo y de elemento incompatibles");
+                                      else{
+                                        $$.tipo = camp.tipo; /*o simb.tipo, duda*/
+                                        /*$$.desp = camp.desp*/
+                                      }
+                                    }
+                                  }
+                                }
+                              }
                             ;
 
 expresionLogica             : expresionIgualdad
@@ -198,11 +251,66 @@ expresionUnaria             : expresionSufija
                             ;
 
 expresionSufija             : APAR_ expresion CPAR_
+                              {
+                                $$.tipo = $2.tipo; $$.desp = $2.desp;
+                              }
                             | ID_ operadorIncremento
+                              {
+                                SIMB simb = obtTdS($1);
+                                if(simb.tipo == T_ERROR)
+                                  yyerror("variable no definida");
+                                else
+                                  if(simb.tipo != T_ENTERO)
+                                    yyerror("no se puede incrementar una variable no entera");
+                                  else
+                                    $$.tipo = simb.tipo;
+
+                              }
                             | ID_ ALLAV_ expresion CLLAV_
+                              { SIMB simb = obtTdS($1);
+                                if (simb.tipo == T_ERROR) yyerror("Array no declarado");
+                                else{
+                                  if (simb.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
+                                  else{
+                                    if($3.tipo != T_ENTERO) yyerror("Tipo incorrecto de indice de Array");
+                                    else{
+                                      DIM dim = obtTdA(simb.ref);
+                                      $$.tipo = dim.telem;
+                                      /*$$.desp = simb.desp;*/
+                                    }
+                                  }
+                                }
+                              }
                             | ID_
+                              { SIMB simb = obtTdS($1);
+                                if (simb.tipo == T_ERROR) yyerror("Variable no declarada");
+                                else
+                                  $$.tipo = simb.tipo;
+                                  /*$$.desp = simb.desp;*/
+                              }
                             | ID_ PUNTO_ ID_
+                              { SIMB simb = obtTdS($1);
+                                if(simb.tipo == T_ERROR)
+                                  yyerror("identificador no declarado");
+                                else{
+                                  if(simb.tipo != T_RECORD)
+                                    yyerror("no se puede acceder a un campo de un no-registro");
+                                  else{
+                                    CAMP camp = obtTdR(simb.ref, $3);
+                                    if(camp.tipo == T_ERROR)
+                                      yyerror("campo no definido");
+                                    else{
+                                      $$.tipo = camp.tipo;
+                                      /*$$.desp = camp.desp*/
+                                    }
+                                  }
+                                }
+                              }
                             | constante
+                              {
+                                $$.tipo = $1;
+                                /*¿$$.desp = TALLA_TIPO_SIMPLE?*/
+                              }
                             ;
 
 /*****************************************************************************/
@@ -252,7 +360,7 @@ operadorAditivo             : MAS_
 
 operadorMultiplicativo      : POR_
                             | DIV_
-                            |RESTO_
+                            | RESTO_
                             ;
 
 operadorUnario              : MAS_
