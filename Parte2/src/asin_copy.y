@@ -144,16 +144,31 @@ instruccionExpresion        : expresion PYC_
 
 expresion                   : expresionLogica
                             | ID_ operadorAsignacion expresion
-                              /*{*$$.tipo = T_ERROR;
+                              { $$.tipo = T_ERROR;
                                 SIMB sim = obtTdS($1); 
                                 if(sim.tipo == T_ERROR) yyerror("Objeto no declarado");
                                 else if (! ((sim.tipo == $3 == T_ENTERO) ||
                                             (sim.tipo == $3 == T_LOGICO)))
                                       yyerror("Error de tipos en la 'instruccion de asignación'");
                                 else $$.tipo = sim.tipo;
-                              }*/
+                                /*¿desplazamiento?*/
+                              }
 
                             | ID_ ALLAV_ expresion CLLAV_ operadorAsignacion expresion
+                              { SIMB sim = obtTdS($1);
+                                if (sim.tipo == T_ERROR) yyerror("Array no declarado");
+                                else
+                                  if (sim.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
+                                  else
+                                    if($3.tipo != T_ENTERO) yyerror("Tipo incorrecto de indice de Array");
+                                    else
+                                      DIM dim = obtTdA(sim.ref);
+                                      if (dim.telem != $5.tipo)
+                                        yyerror("tipo incompatible con los tipos del array");
+                                      else
+                                        $$.tipo = sim.tipo;
+                                        /*¿desplazamiento?*/
+                              }
                             | ID_ PUNTO_ ID_ operadorAsignacion expresion
                             ;
 
