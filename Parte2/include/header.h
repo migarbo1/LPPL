@@ -5,6 +5,10 @@
 #define TRUE 1
 #define FALSE 0
 
+#define NOT 19
+#define AND 20
+#define OR 21
+
 /*constantes simbolicas*/
 #define TALLA_TIPO_SIMPLE 1
 

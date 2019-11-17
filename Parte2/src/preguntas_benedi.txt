@@ -4,4 +4,5 @@
 
 ¿en instruccionExpresion -> expresion PYC, que se ha de poner, no se deben propagar los valores, no?
 
+¿en el operador relacional, podemos comparar que dos booleanos sean mayores, menores etc?
 

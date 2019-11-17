@@ -28,6 +28,7 @@
 %type <registro> listaCampos
 %type <cent> tipoSimple constante
 %type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
+%type <cent> operadorLogico operadorUnario
 
 %%
 programa                    :  {dvar = 0;}
@@ -149,24 +150,25 @@ instruccionSeleccion        : IF_ APAR_ expresion CPAR_ instruccion ELSE_ instru
                               }
                             ;
 
-instruccionIteracion        : WHILE_ APAR_ expresion CPAR_ instruccion
-                              { if($3.tipo != T_ERROR)
+instruccionIteracion        : WHILE_ APAR_ expresion CPAR_ 
+                                { if($3.tipo != T_ERROR)
                                   if($3.tipo != T_LOGICO)
                                     yyerror("la condición debe ser de tipo lógico");
-                              }
+                                } 
+                              instruccion
                             ;
 
 instruccionExpresion        : expresion PYC_
                               {
-                                /*¿$$.tipo $$.desp?*/
+                                /* ¿$$.tipo $$.desp?*/
                               }
                             | PYC_
-                              { /*¿$$.tipo = T_VACIO?*/}
+                              { /* ¿$$.tipo = T_VACIO?*/ }
                             ;
 
 /*****************************************************************************/
 
-/*tiene expresion desplazamiento?*/
+/* tiene expresion desplazamiento?*/
 expresion                   : expresionLogica
                               {
                                 $$.tipo = $1.tipo; $$.desp = $1.desp;
@@ -175,15 +177,18 @@ expresion                   : expresionLogica
                               { $$.tipo = T_ERROR;
                                 SIMB simb = obtTdS($1); 
                                 if(simb.tipo == T_ERROR) yyerror("Objeto no declarado");
-                                else if (! ((simb.tipo == $3.tipo == T_ENTERO) || /*si no tiene desplazamiento, $3 solo*/
-                                            (simb.tipo == $3.tipo == T_LOGICO)))  /*si no tiene desplazamiento, $3 solo*/
+                                else
+                                  if (! ((simb.tipo == $3.tipo == T_ENTERO) || /* si no tiene desplazamiento, $3 solo*/
+                                            (simb.tipo == $3.tipo == T_LOGICO)))  /* si no tiene desplazamiento, $3 solo*/
                                       yyerror("Error de tipos en la 'instruccion de asignación'");
-                                else $$.tipo = simb.tipo;
-                                /*¿desplazamiento? $$:desp = simb.desp*/
+                                  else $$.tipo = simb.tipo;
+                                  /* ¿desplazamiento? $$:desp = simb.desp*/
+                                
                               }
 
                             | ID_ ALLAV_ expresion CLLAV_ operadorAsignacion expresion
-                              { SIMB simb = obtTdS($1);
+                              { $$.tipo = T_ERROR;
+                                SIMB simb = obtTdS($1);
                                 if (simb.tipo == T_ERROR) yyerror("Array no declarado");
                                 else{
                                   if (simb.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
@@ -194,15 +199,16 @@ expresion                   : expresionLogica
                                       if (dim.telem != $6.tipo)
                                         yyerror("tipo incompatible con los tipos del array");
                                       else{
-                                        $$.tipo = dim.telem; /*o simb.tipo, duda*/
-                                        /*¿desplazamiento? $$.desp = simb.desp*/
+                                        $$.tipo = dim.telem; /* o simb.tipo, duda*/
+                                        /* ¿desplazamiento? $$.desp = simb.desp*/
                                       }
                                     }
                                   }
                                 }
                               }
                             | ID_ PUNTO_ ID_ operadorAsignacion expresion
-                              { SIMB simb = obtTdS($1);
+                              { $$.tipo = T_ERROR;
+                                SIMB simb = obtTdS($1);
                                 if(simb.tipo == T_ERROR)
                                   yyerror("identificador no declarado");
                                 else{
@@ -216,8 +222,8 @@ expresion                   : expresionLogica
                                       if(camp.tipo != $5.tipo)
                                         yyerror("tipo de campo y de elemento incompatibles");
                                       else{
-                                        $$.tipo = camp.tipo; /*o simb.tipo, duda*/
-                                        /*$$.desp = camp.desp*/
+                                        $$.tipo = camp.tipo; /* o simb.tipo, duda*/
+                                        /* $$.desp = camp.desp*/
                                       }
                                     }
                                   }
@@ -226,28 +232,107 @@ expresion                   : expresionLogica
                             ;
 
 expresionLogica             : expresionIgualdad
+                              {
+                                $$.desp = $1.desp;
+                                $$.tipo = $1.tipo;
+                              }
                             | expresionLogica operadorLogico expresionIgualdad
+                              { $$.tipo = T_ERROR;
+                                if($1.tipo != T_ERROR && $3.tipo != T_ERROR)
+                                  if($1.tipo != T_LOGICO || $3.tipo != T_LOGICO)
+                                    yyerror("ambos operadores deben ser de tipo logico");
+                                  else
+                                    $$.tipo = T_LOGICO;
+                              }
                             ;
 
 expresionIgualdad           : expresionRelaiconal
+                              {
+                                $$.desp = $1.desp;
+                                $$.tipo = $1.tipo;
+                              }
                             | expresionIgualdad operadorIgualdad expresionRelaiconal
+                              { $$.tipo = T_ERROR;
+                                if($1.tipo != T_ERROR && $3.tipo != T_ERROR)
+                                  if(!(($1.tipo == T_LOGICO && $3.tipo == T_LOGICO)||($1.tipo == T_ENTERO && $3.tipo == T_ENTERO)))
+                                    yyerror("ambos operadores deben ser del mismo tipo");
+                                  else
+                                    $$.tipo = T_LOGICO;
+                              }
                             ;
 
 expresionRelaiconal         : expresionAditiva
+                              {
+                                $$.desp = $1.desp;
+                                $$.tipo = $1.tipo;
+                              }
                             | expresionRelaiconal operadorRelacional expresionAditiva
+                              { $$.tipo = T_ERROR;
+                                if($1.tipo != T_ERROR && $3.tipo != T_ERROR)
+                                  if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) /* ¿tener en cuenta los booleanos? */
+                                    yyerror("ambos operadores deben ser de tipo entero");
+                                  else
+                                    $$.tipo = T_LOGICO;
+                              }
                             ;
 
 expresionAditiva            : expresionMultiplicativa
+                              {
+                                $$.desp = $1.desp;
+                                $$.tipo = $1.tipo;
+                              }
                             | expresionAditiva operadorAditivo expresionMultiplicativa
+                              { $$.tipo = T_ERROR;
+                                if($1.tipo != T_ERROR && $3.tipo != T_ERROR)
+                                  if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO)
+                                    yyerror("ambos operadores deben ser de tipo entero");
+                                  else
+                                    $$.tipo = $1.tipo;
+                              }
                             ;
 
 expresionMultiplicativa     : expresionUnaria
+                              {
+                                $$.desp = $1.desp;
+                                $$.tipo = $1.tipo;
+                              }
                             | expresionMultiplicativa operadorMultiplicativo expresionUnaria
+                              { $$.tipo = T_ERROR;
+                                if($1.tipo != T_ERROR && $3.tipo != T_ERROR)
+                                  if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO)
+                                    yyerror("ambos operadores deben ser de tipo entero");
+                                  else
+                                    $$.tipo = $1.tipo;
+                              }
                             ;
 
 expresionUnaria             : expresionSufija
+                              {
+                                $$.desp = $1.desp;
+                                $$.tipo = $1.tipo;
+                              }
                             | operadorUnario expresionUnaria
+                              { $$.tipo = T_ERROR;
+                                if ($2.tipo != T_ERROR)
+                                  if($1 == NOT && $2.tipo == T_ENTERO)
+                                    yyerror("error de tipos en la aplicación del NOT");
+                                  else
+                                    $$.tipo = $2.tipo;
+
+                              }
                             | operadorIncremento ID_
+                              { $$.tipo = T_ERROR;
+                                SIMB simb = obtTdS($2);
+                                if(simb.tipo == T_ERROR)
+                                  yyerror("variable no definida");
+                                else {
+                                  if(simb.tipo != T_ENTERO)
+                                    yyerror("no se puede realizar una operación incremental sobre un no entero");
+                                  else {
+                                    $$.tipo = simb.tipo;
+                                  }
+                                }
+                              }
                             ;
 
 expresionSufija             : APAR_ expresion CPAR_
@@ -255,7 +340,7 @@ expresionSufija             : APAR_ expresion CPAR_
                                 $$.tipo = $2.tipo; $$.desp = $2.desp;
                               }
                             | ID_ operadorIncremento
-                              {
+                              { $$.tipo = T_ERROR;
                                 SIMB simb = obtTdS($1);
                                 if(simb.tipo == T_ERROR)
                                   yyerror("variable no definida");
@@ -267,7 +352,8 @@ expresionSufija             : APAR_ expresion CPAR_
 
                               }
                             | ID_ ALLAV_ expresion CLLAV_
-                              { SIMB simb = obtTdS($1);
+                              { $$.tipo = T_ERROR;
+                                SIMB simb = obtTdS($1);
                                 if (simb.tipo == T_ERROR) yyerror("Array no declarado");
                                 else{
                                   if (simb.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
@@ -276,20 +362,22 @@ expresionSufija             : APAR_ expresion CPAR_
                                     else{
                                       DIM dim = obtTdA(simb.ref);
                                       $$.tipo = dim.telem;
-                                      /*$$.desp = simb.desp;*/
+                                      /* $$.desp = simb.desp; */
                                     }
                                   }
                                 }
                               }
                             | ID_
-                              { SIMB simb = obtTdS($1);
+                              { $$.tipo = T_ERROR;
+                                SIMB simb = obtTdS($1);
                                 if (simb.tipo == T_ERROR) yyerror("Variable no declarada");
                                 else
                                   $$.tipo = simb.tipo;
-                                  /*$$.desp = simb.desp;*/
+                                  /* $$.desp = simb.desp; */
                               }
                             | ID_ PUNTO_ ID_
-                              { SIMB simb = obtTdS($1);
+                              { $$.tipo = T_ERROR;
+                                SIMB simb = obtTdS($1);
                                 if(simb.tipo == T_ERROR)
                                   yyerror("identificador no declarado");
                                 else{
@@ -301,7 +389,7 @@ expresionSufija             : APAR_ expresion CPAR_
                                       yyerror("campo no definido");
                                     else{
                                       $$.tipo = camp.tipo;
-                                      /*$$.desp = camp.desp*/
+                                      /* $$.desp = camp.desp*/
                                     }
                                   }
                                 }
@@ -309,7 +397,7 @@ expresionSufija             : APAR_ expresion CPAR_
                             | constante
                               {
                                 $$.tipo = $1;
-                                /*¿$$.desp = TALLA_TIPO_SIMPLE?*/
+                                /* ¿$$.desp = TALLA_TIPO_SIMPLE?*/
                               }
                             ;
 
@@ -341,7 +429,13 @@ operadorAsignacion          : IGU_
                             ;
 
 operadorLogico              : AND_
+                              {
+                                $$ = AND;
+                              }
                             | OR_
+                              {
+                                $$ = OR;
+                              }
                             ;
 
 operadorIgualdad            : IGUALC_
@@ -366,6 +460,9 @@ operadorMultiplicativo      : POR_
 operadorUnario              : MAS_
                             | MENOS_
                             | EXCL_
+                              {
+                                $$ = NOT;
+                              }
                             ;
 
 operadorIncremento          : INCR_
