@@ -174,56 +174,60 @@ expresion                   : expresionLogica
                                 $$.tipo = $1.tipo; $$.desp = $1.desp;
                               }
                             | ID_ operadorAsignacion expresion
-                              { $$.tipo = T_ERROR;
-                                SIMB simb = obtTdS($1); 
-                                if(simb.tipo == T_ERROR) yyerror("Objeto no declarado");
-                                else
-                                  if (! ((simb.tipo == $3.tipo == T_ENTERO) || /* si no tiene desplazamiento, $3 solo*/
-                                            (simb.tipo == $3.tipo == T_LOGICO)))  /* si no tiene desplazamiento, $3 solo*/
-                                      yyerror("Error de tipos en la 'instruccion de asignación'");
-                                  else $$.tipo = simb.tipo;
-                                  /* ¿desplazamiento? $$:desp = simb.desp*/
-                                
+                              { if($3.tipo != T_ERROR){
+                                  $$.tipo = T_ERROR;
+                                  SIMB simb = obtTdS($1); 
+                                  if(simb.tipo == T_ERROR) yyerror("Objeto no declarado");
+                                  else
+                                    if (! ((simb.tipo == $3.tipo == T_ENTERO) || /* si no tiene desplazamiento, $3 solo*/
+                                              (simb.tipo == $3.tipo == T_LOGICO)))  /* si no tiene desplazamiento, $3 solo*/
+                                        yyerror("Error de tipos en la 'instruccion de asignación'");
+                                    else $$.tipo = simb.tipo;
+                                }
                               }
 
                             | ID_ ALLAV_ expresion CLLAV_ operadorAsignacion expresion
-                              { $$.tipo = T_ERROR;
-                                SIMB simb = obtTdS($1);
-                                if (simb.tipo == T_ERROR) yyerror("Array no declarado");
-                                else{
-                                  if (simb.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
+                              { if ($6.tipo != T_ERROR){
+                                  $$.tipo = T_ERROR;
+                                  SIMB simb = obtTdS($1);
+                                  if (simb.tipo == T_ERROR) yyerror("Array no declarado");
                                   else{
-                                    if($3.tipo != T_ENTERO) yyerror("Tipo incorrecto de indice de Array");
+                                    if (simb.tipo != T_ARRAY) yyerror("La variable a la que se intentó acceder no es un array");
                                     else{
-                                      DIM dim = obtTdA(simb.ref);
-                                      if (dim.telem != $6.tipo)
-                                        yyerror("tipo incompatible con los tipos del array");
+                                      if($3.tipo != T_ENTERO) yyerror("Tipo incorrecto de indice de Array");
                                       else{
-                                        $$.tipo = dim.telem; /* o simb.tipo, duda*/
-                                        /* ¿desplazamiento? $$.desp = simb.desp*/
+                                        DIM dim = obtTdA(simb.ref);
+                                        if (dim.telem != $6.tipo)
+                                          yyerror("tipo incompatible con los tipos del array");
+                                        else{
+                                          $$.tipo = dim.telem; /* o simb.tipo, duda*/
+                                          /* ¿desplazamiento? $$.desp = simb.desp*/
+                                        }
                                       }
                                     }
                                   }
                                 }
                               }
                             | ID_ PUNTO_ ID_ operadorAsignacion expresion
-                              { $$.tipo = T_ERROR;
-                                SIMB simb = obtTdS($1);
-                                if(simb.tipo == T_ERROR)
-                                  yyerror("identificador no declarado");
-                                else{
-                                  if(simb.tipo != T_RECORD)
-                                    yyerror("no se puede acceder a un campo de un no-registro");
+                              { if($5.tipo != T_ERROR){
+                                  $$.tipo = T_ERROR;
+                                  SIMB simb = obtTdS($1);
+                                  if(simb.tipo == T_ERROR)
+                                    yyerror("identificador no declarado");
                                   else{
-                                    CAMP camp = obtTdR(simb.ref, $3);
-                                    if(camp.tipo == T_ERROR)
-                                      yyerror("campo no definido");
+                                    if(simb.tipo != T_RECORD)
+                                      yyerror("no se puede acceder a un campo de un no-registro");
                                     else{
-                                      if(camp.tipo != $5.tipo)
-                                        yyerror("tipo de campo y de elemento incompatibles");
+                                      CAMP camp = obtTdR(simb.ref, $3);
+                                      if(camp.tipo == T_ERROR)
+                                        yyerror("campo no definido");
                                       else{
-                                        $$.tipo = camp.tipo; /* o simb.tipo, duda*/
-                                        /* $$.desp = camp.desp*/
+                                        if(camp.tipo != $5.tipo)
+                                          yyerror("tipo de campo y de elemento incompatibles");
+                                        else{
+                                          $$.tipo = camp.tipo; /* o simb.tipo, duda*/
+                                          /* $$.desp = camp.desp*/
+                                        }
                                       }
                                     }
                                   }
