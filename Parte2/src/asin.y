@@ -57,7 +57,7 @@ declaracion                 : tipoSimple ID_ PYC_
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
-                                  if( ! $1 == $4)
+                                  if( ! ($1 == $4))
                                     yyerror("No se pudo realizar la asignación, tipos incompatibles");
                                   else
                                     if( ! insTdS($2, $1, dvar, -1) )
