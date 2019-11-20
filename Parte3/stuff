@@ -1,0 +1,20 @@
+funciones: p.e:
+void emite(codigo de operacion-> nombre en la libreria, TIPO_ARG arg1-> conviene utilizar las funciones aunque se puede haer a piñon es una estructura con el tipo correspondiente a cada arg o res, ...)
+no hemos de usar volcarcodigo como tal
+
+propagar como atribto de operacion el cop siempre que se pueda.
+
+
+arg crArgPos
+
+cte crArg.. entero
+
+etiqueta  crArg.. direccion de salt
+
+nada/vacio crArg.. null
+
+
+si el programa no tiene errores se volcará a un fichero y se ejecutará
+
+
+valor del fichero que saca: si es p posicion y el numero que acompaña el desplazamiento respecto al origen. si es i la cte entera X y si es e: direccion de salto si pone 40 se desplaza a la instrucción 40 -> linea 40 del fichero.
