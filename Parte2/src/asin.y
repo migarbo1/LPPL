@@ -70,14 +70,16 @@ declaracion                 : tipoSimple ID_ PYC_
                             | tipoSimple ID_ ALLAV_ CTE_ CLLAV_ PYC_
                                 {
                                   int numelem = $4;
-                                  if ($4 <=0)
+                                  if ($4 <=0){
                                     yyerror("Talla inapropiada del array");
                                     numelem = 0;
-                                  int refe = insTdA($1,numelem);
-                                  if( !insTdS($2, T_ARRAY, dvar, refe) )
-                                    yyerror("identificador repetido");
-                                  
-                                  else dvar += numelem * TALLA_TIPO_SIMPLE;
+                                  } else{
+                                    int refe = insTdA($1,numelem);
+                                    if( !insTdS($2, T_ARRAY, dvar, refe) ){
+                                      yyerror("identificador repetido");
+                                    }
+                                    else{ dvar += numelem * TALLA_TIPO_SIMPLE;}
+                                  }
                                  }
 
                             | STRUCT_ ACOR_ listaCampos CCOR_ ID_ PYC_
