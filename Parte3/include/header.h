@@ -15,6 +15,7 @@
 /*variables globales */
 extern int verTDS;
 extern int dvar;
+extern int si; /*desplazamiento relativo en el segmento de código*/
 
 /*variables externas definidas en el AL*/
 extern int yylex();

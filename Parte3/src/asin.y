@@ -30,7 +30,7 @@
 %type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
 
 %%
-programa                    :  {dvar = 0;}
+programa                    :  {dvar = 0; sin = 0;}
                               ACOR_ secuenciaSentencias CCOR_
                                 { if (verTDS) verTdS(); }
                             ;
@@ -303,6 +303,8 @@ expresionAditiva            : expresionMultiplicativa
                                   }
                                   else{
                                     $$.tipo = $1.tipo;
+				    $$.pos = creaVarTemp();
+				    emite($2,crArgPos($1.pos),crArgpos($3.pos),crArgPos($$.pos));
                                   }
                                 }
                               }
@@ -468,7 +470,13 @@ operadorRelacional          : MAYOR_
                             ;
 
 operadorAditivo             : MAS_
+			      {
+				$$ = ESUM;
+			      }
                             | MENOS_
+			      {
+				$$ = EDIF;
+			      }
                             ;
 
 operadorMultiplicativo      : POR_
