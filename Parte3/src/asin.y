@@ -26,7 +26,7 @@
 %token INT_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
 %type <registro> listaCampos
-%type <cent> tipoSimple constante operadorLogico operadorUnario
+%type <cent> tipoSimple constante operadorLogico operadorUnario operadorAditivo operadorAsignacion operadorIgualdad operadorIncremento operadorMultiplicativo operadorRelacional
 %type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
 
 %%
@@ -303,8 +303,8 @@ expresionAditiva            : expresionMultiplicativa
                                   }
                                   else{
                                     $$.tipo = $1.tipo;
-				    $$.pos = creaVarTemp();
-				    emite($2,crArgPos($1.pos),crArgpos($3.pos),crArgPos($$.pos));
+                                    $$.desp = creaVarTemp();
+                                    emite($2,crArgPos($1.desp),crArgPos($3.desp),crArgPos($$.desp));
                                   }
                                 }
                               }
@@ -386,6 +386,9 @@ expresionSufija             : APAR_ expresion CPAR_
                                     else{
                                       DIM dim = obtTdA(simb.ref);
                                       $$.tipo = dim.telem;
+                                      emite(EMULT, crArgEnt($3.desp), crArgEnt(TALLA_TIPO_SIMPLE,crArgPos($3.desp)));
+                                      $3.desp = creaVarTemp();
+                                      emite(EAV, crArgPos(simb.desp), crArgEnt($3.desp),crArgPos($$.desp));
                                     }
                                   }
                                 }
@@ -396,6 +399,8 @@ expresionSufija             : APAR_ expresion CPAR_
                                 if (simb.tipo == T_ERROR) yyerror("Variable no declarada");
                                 else
                                   $$.tipo = simb.tipo;
+                                  $$.desp = creaVarTemp();
+                                  emite(EASIG, crArgPos(simb.desp), crArgNul(), crArgPos($$.desp));
                               }
                             | ID_ PUNTO_ ID_
                               { $$.tipo = T_ERROR;
@@ -411,6 +416,9 @@ expresionSufija             : APAR_ expresion CPAR_
                                       yyerror("Campo no definido");
                                     else{
                                       $$.tipo = camp.tipo;
+                                      int desp = simb.desp + camp.desp;
+                                      $$.desp = creaVarTemp();
+                                      emite(EASIG, crArgEnt(desp), crArgNul(), crArgPos($$.desp));
                                     }
                                   }
                                 }
@@ -418,7 +426,8 @@ expresionSufija             : APAR_ expresion CPAR_
                             | constante
                               {
                                 $$.tipo = $1;
-                                /* ¿$$.desp = TALLA_TIPO_SIMPLE?*/
+                                $$.desp = creaVarTemp();
+                                emite(EASIG, crArgPos($1), crArgNul(), crArgPos($$.desp));
                               }
                             ;
 
@@ -427,22 +436,31 @@ expresionSufija             : APAR_ expresion CPAR_
 constante                   : CTE_
                                 {
                                   $$ = T_ENTERO;
+                                  $$.desp = creaVarTemp();
+                                  emite(EASIG, crArgEnt($1), crArgNul(), crArgPos($$.desp));
                                 }
 
                             | TRUE_
                                 {
                                   $$ = T_LOGICO;
+                                  $$.desp = creaVarTemp();
+                                  emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.desp));
                                 }
 
                             | FALSE_
                                 {
                                   $$ = T_LOGICO;
+                                  $$.desp = creaVarTemp();
+                                  emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.desp));
                                 }
                             ;
 
 /*****************************************************************************/
 
 operadorAsignacion          : IGU_
+                              {
+                                $$ = EASIG;
+                              }
                             | MASIG_
                             | MENIG_
                             | PORIG_
@@ -460,32 +478,65 @@ operadorLogico              : AND_
                             ;
 
 operadorIgualdad            : IGUALC_
+                              {
+                                $$ = EIGUAL;
+                              }
                             | DIF_
+                              {
+                                $$ = EDIF;
+                              }
                             ;
 
-operadorRelacional          : MAYOR_
+operadorRelacional          : MAYOR_ 
+                              {
+                                $$ = EMAY;
+                              }
                             | MENOR_
+                              {
+                                $$ = EMEN;
+                              }
                             | MAIG_
+                              {
+                                $$ = EMAYEQ;
+                              }
                             | MEIG_
+                              {
+                                $$ = EMENEQ
+                              }
                             ;
 
 operadorAditivo             : MAS_
-			      {
-				$$ = ESUM;
-			      }
+                              {
+                                $$ = ESUM;
+                              }
                             | MENOS_
-			      {
-				$$ = EDIF;
-			      }
+                              {
+                                $$ = EDIF;
+                              }
                             ;
 
 operadorMultiplicativo      : POR_
+                              {
+                                $$ = EMULT;
+                              }
                             | DIV_
+                              {
+                                $$ = EDIVI;
+                              }
                             | RESTO_
+                              {
+                                $$ = RESTO;
+                              }
                             ;
 
-operadorUnario              : MAS_ {$$ = 0;}
-                            | MENOS_ {$$ = 1;}
+operadorUnario              : MAS_ 
+                              {
+                                $$ = ESUM;
+                              }
+                            | MENOS_ 
+                              {
+                                $$ = EDIF;
+                              }
                             | EXCL_
                               {
                                 $$ = NOT;
