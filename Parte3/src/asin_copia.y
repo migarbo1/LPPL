@@ -30,7 +30,7 @@
 %type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
   
 %%
-programa                    :  {dvar = 0; sin = 0;}
+programa                    :  {dvar = 0; si = 0;}
                               ACOR_ secuenciaSentencias CCOR_
                                 { if (verTDS) verTdS(); }
                                 emite(FIN, crArgNul(),crArgNul(),crArgNul());
@@ -156,26 +156,38 @@ instruccionSeleccion        : IF_ APAR_ expresion CPAR_
                               }
                               instruccion 
                               {
-                                
+                                $<cent>$ = creaLans(si);
+                                emite(GOTOS, crArgNul(), crArgNul(), crArgEtq(-1));
+                                completaLans($<cent>5, crArgEnt(si));
                               }
                               ELSE_ instruccion
                               {
-                                
+                                completaLans($<cent>7, crArgEnt(si));
                               }
                             ;
 
-instruccionIteracion        : WHILE_ APAR_ expresion CPAR_ 
+instruccionIteracion        : WHILE_ 
+                              {
+                                $<cent>$ = si;
+                              }
+                              APAR_ expresion CPAR_ 
                                 { if($3.tipo != T_ERROR)
                                     if($3.tipo != T_LOGICO)
-                                    yyerror("La condición debe ser de tipo lógico");
+                                      yyerror("La condición debe ser de tipo lógico");
+                                  $<cent>$ = creaLans(si);
+                                  emite(EIGUAL, crArgPos($3.desp), crArgEnt(0), crArgEtq(-1));
                                 } 
                               instruccion
+                              {
+                                emite(GOTOS, crArgNul(), crArgNul(), crArgEtq($<cent>2));
+                                completaLans($<cent>6, crArgEnt(si));
+                              }
                             ;
 
 instruccionExpresion        : expresion PYC_
-                              { }
+                              {}
                             | PYC_
-                              { }
+                              {}
                             ;
 
 /*****************************************************************************/

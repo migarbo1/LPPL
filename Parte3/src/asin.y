@@ -26,13 +26,14 @@
 %token INT_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
 %type <registro> listaCampos
-%type <cent> tipoSimple constante operadorLogico operadorUnario operadorAditivo operadorAsignacion operadorIgualdad operadorIncremento operadorMultiplicativo operadorRelacional
+%type <cent> tipoSimple constante operadorLogico operadorUnario
 %type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
-
+  
 %%
-programa                    :  {dvar = 0; sin = 0;}
+programa                    :  {dvar = 0; si = 0;}
                               ACOR_ secuenciaSentencias CCOR_
                                 { if (verTDS) verTdS(); }
+                                emite(FIN, crArgNul(),crArgNul(),crArgNul());
                             ;
 
 secuenciaSentencias         : sentencia
@@ -53,7 +54,7 @@ declaracion                 : tipoSimple ID_ PYC_
                                     yyerror("Variable ya definida");
                                   else 
                                     dvar += TALLA_TIPO_SIMPLE;
-                                }
+                                }desp
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
@@ -86,11 +87,10 @@ declaracion                 : tipoSimple ID_ PYC_
                                   if(! insTdS($5, T_RECORD, $3.talla, $3.ref))
                                     yyerror("Identificador repetido");
                                   else
-                                    dvar += $3.talla;
                                 }
                             ;
 
-/*****************************************************************************/
+/*********************************
 
 tipoSimple                  : INT_
                                 {
@@ -130,40 +130,64 @@ instruccion                 : ACOR_ CCOR_
                             ;
 
 listaInstrucciones          : instruccion
-                            | listaInstrucciones instruccion
+                            | listaInstrucciones instrucciondesp
                             ;
 /*****************************************************************************/
 instruccionesEntradaSalida  : READ_ APAR_ ID_ CPAR_ PYC_
                               { SIMB simb = obtTdS($3);
                                 if(simb.tipo != T_ENTERO)
                                   yyerror("No se pueden leer valores no enteros");
+                                emite(EREAD, crArgNul(), crArgNul(), crArgPos(simb.desp));
                               }
                             | PRINT_ APAR_ expresion CPAR_ PYC_
                               { if($3.tipo != T_ERROR)
                                   if ($3.tipo != T_ENTERO)
                                     yyerror("No se pueden imprimir valores de tipo no entero");
+                                emite(EWRITE, crArgNul(), crArgNul(), crArgPos($3.desp));
                               }
                             ;
 
-instruccionSeleccion        : IF_ APAR_ expresion CPAR_ instruccion ELSE_ instruccion
+instruccionSeleccion        : IF_ APAR_ expresion CPAR_
                               { if($3.tipo != T_ERROR)
                                   if($3.tipo != T_LOGICO)
                                     yyerror("La condición debe ser de tipo lógico");
+                                $<cent>$ = creaLans(si);
+                                emite(EIGUAL, crArgPos($3.desp), crArgEnt(0), crArgEtq(-1));
+                              }
+                              instruccion 
+                              {
+                                $<cent>$ = creaLans(si);
+                                emite(GOTOS, crArgNul(), crArgNul(), crArgEtq(-1));
+                                completaLans($<cent>5, crArgEnt(si));
+                              }
+                              ELSE_ instruccion
+                              {
+                                completaLans($<cent>7, crArgEnt(si));
                               }
                             ;
 
-instruccionIteracion        : WHILE_ APAR_ expresion CPAR_ 
+instruccionIteracion        : WHILE_ 
+                              {
+                                $<cent>$ = si;
+                              }
+                              APAR_ expresion CPAR_ 
                                 { if($3.tipo != T_ERROR)
                                     if($3.tipo != T_LOGICO)
-                                    yyerror("La condición debe ser de tipo lógico");
+                                      yyerror("La condición debe ser de tipo lógico");
+                                  $<cent>$ = creaLans(si);
+                                  emite(EIGUAL, crArgPos($3.desp), crArgEnt(0), crArgEtq(-1));
                                 } 
                               instruccion
+                              {
+                                emite(GOTOS, crArgNul(), crArgNul(), crArgEtq($<cent>2));
+                                completaLans($<cent>6, crArgEnt(si));
+                              }
                             ;
 
 instruccionExpresion        : expresion PYC_
-                              { }
+                              {}
                             | PYC_
-                              { }
+                              {}
                             ;
 
 /*****************************************************************************/
