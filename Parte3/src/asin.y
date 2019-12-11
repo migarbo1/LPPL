@@ -26,7 +26,8 @@
 %token INT_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
 %type <registro> listaCampos
-%type <cent> tipoSimple constante operadorLogico operadorUnario
+%type <cent> tipoSimple constante operadorLogico operadorUnario operadorAditivo operadorAsignacion operadorIgualdad operadorIncremento operadorMultiplicativo operadorRelacional
+%type <cent> instruccionSeleccion
 %type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
   
 %%
@@ -54,7 +55,7 @@ declaracion                 : tipoSimple ID_ PYC_
                                     yyerror("Variable ya definida");
                                   else 
                                     dvar += TALLA_TIPO_SIMPLE;
-                                }/*desp*/
+                                }
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
@@ -86,11 +87,12 @@ declaracion                 : tipoSimple ID_ PYC_
                                 {
                                   if(! insTdS($5, T_RECORD, $3.talla, $3.ref))
                                     yyerror("Identificador repetido");
-                                  else
+                                    else
+                                      dvar += $3.talla;
                                 }
                             ;
 
-/*********************************
+/*************************************************************************/
 
 tipoSimple                  : INT_
                                 {
@@ -207,11 +209,12 @@ expresion                   : expresionLogica
                                       if (! ((simb.tipo  == T_ENTERO && $3.tipo == T_ENTERO) || 
                                                 (simb.tipo  == T_LOGICO && $3.tipo == T_LOGICO))) 
                                           yyerror("Error de tipos en la 'instruccion de asignación'");
-                                      else $$.tipo = simb.tipo;
+                                      else{ $$.tipo = simb.tipo;
 
                                       $$.desp = creaVarTemp();
                                       emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos($$.desp));
                                       emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos(simb.desp));
+                                      }
                                     }
                                   }
                                 }
@@ -386,6 +389,9 @@ expresionMultiplicativa     : expresionUnaria
                                   }
                                   else{
                                     $$.tipo = $1.tipo;
+                                    
+                                    $$.desp = creaVarTemp();
+                                    emite($2, crArgPos($1.desp),crArgPos($3.desp),crArgPos($$.desp));
                                   }
                                 }
                               }
@@ -404,6 +410,12 @@ expresionUnaria             : expresionSufija
                                   }
                                   else{
                                     $$.tipo = $2.tipo;
+                                    $$.desp = creaVarTemp();
+                                    if($1 == NOT){
+                                      emite(EDIF, crArgEnt(1),crArgPos($2.desp),crArgPos($$.desp));
+                                    }else{
+                                      emite($1, crArgEnt(0), crArgPos($2,desp),crArgPos($$.desp));
+                                    }
                                   }
                                 }
                               }
@@ -417,6 +429,8 @@ expresionUnaria             : expresionSufija
                                     yyerror("No se puede realizar una operación incremental sobre un no entero");
                                   else {
                                     $$.tipo = simb.tipo;
+                                    $$.desp = creaVarTemp();
+                                    emite($1,crArgPos(simb.desp), crArgEnt(1),crArgPos($$.desp));
                                   }
                                 }
                               }
@@ -434,8 +448,11 @@ expresionSufija             : APAR_ expresion CPAR_
                                 else
                                   if(simb.tipo != T_ENTERO)
                                     yyerror("No se puede incrementar una variable no entera");
-                                  else
+                                  else{
                                     $$.tipo = simb.tipo;
+                                    $$.desp = creaVarTemp();
+                                    emite($2,crArgPos(simb.desp), crArgEnt(1),crArgPos($$.desp));
+                                  }
 
                               }
                             | ID_ ALLAV_ expresion CLLAV_
@@ -460,10 +477,11 @@ expresionSufija             : APAR_ expresion CPAR_
                               { $$.tipo = T_ERROR;
                                 SIMB simb = obtTdS($1);
                                 if (simb.tipo == T_ERROR) yyerror("Variable no declarada");
-                                else
+                                else{
                                   $$.tipo = simb.tipo;
                                   $$.desp = creaVarTemp();
                                   emite(EASIG, crArgPos(simb.desp), crArgNul(), crArgPos($$.desp));
+                                }
                               }
                             | ID_ PUNTO_ ID_
                               { $$.tipo = T_ERROR;
