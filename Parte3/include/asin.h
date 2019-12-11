@@ -94,7 +94,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 12 "src/asin.y" /* yacc.c:1909  */
+#line 13 "src/asin.y" /* yacc.c:1909  */
 
     int cent;
     char *ident;

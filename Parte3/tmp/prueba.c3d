@@ -1,0 +1,17 @@
+  0 EREAD             ,          ,  p:   4  
+  1 EASIG     i:  10  ,          ,  p:   5  
+  2 EASIG     p:   5  ,          ,  p:   6  
+  3 EASIG     p:   4  ,          ,  p:   7  
+  4 ESUM      p:   6  ,  p:   7  ,  p:   8  
+  5 EASIG     p:   8  ,          ,  p:   3  
+  6 EASIG     p:   3  ,          ,  p:   9  
+  7 EASIG     i:  10  ,          ,  p:  10  
+  8 EASIG     p:  10  ,          ,  p:  11  
+  9 ESIG      p:  11  ,          ,  p:  12  
+ 10 EASIG     p:   4  ,          ,  p:  13  
+ 11 EDIF      p:  12  ,  p:  13  ,  p:  14  
+ 12 EASIG     p:  14  ,          ,  p:   5  
+ 13 EASIG     p:   5  ,          ,  p:  15  
+ 14 EASIG     p:   4  ,          ,  p:  16  
+ 15 EWRITE            ,          ,  p:  16  
+ 16 FIN               ,          ,          

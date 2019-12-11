@@ -6,7 +6,7 @@
 
   while (z) {
     read(x); read(y);
-    if ((x != y) || false) {         
+    if ((x != y)) {      
       if ( !(x == 0) && !(y == 0) && true)
         if (x > y)
 	  { print(1); z = false; }

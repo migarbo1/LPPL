@@ -6,8 +6,8 @@
   struct { int n; int m; } B;
   int aux;
 
-  read(aux); A.x = aux;
-  read(aux); A.y = aux;
+  read(aux); A.x = aux;print(A.x);
+  read(aux); A.y = aux;print(A.y);
   while (A.x != A.y) {
     if ( A.x > A.y) { B.n = A.y; B.m = A.x - A.y; }
     else            { B.n = A.x; B.m = A.y - A.x; }

@@ -8,6 +8,8 @@
 #define NOT 19
 #define AND 20
 #define OR 21
+#define MAS 22
+#define MENOS 23
 
 /*constantes simbolicas*/
 #define TALLA_TIPO_SIMPLE 1

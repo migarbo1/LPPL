@@ -6,6 +6,7 @@
 #include <string.h>
 #include "libtds.h"
 #include "header.h"
+#include "libgci.h"
 
 %}
 
@@ -26,15 +27,16 @@
 %token INT_ STRUCT_ BOOL_ READ_ PRINT_ IF_ ELSE_ WHILE_ TRUE_ FALSE_
 
 %type <registro> listaCampos
-%type <cent> tipoSimple constante operadorLogico operadorUnario operadorAditivo operadorAsignacion operadorIgualdad operadorIncremento operadorMultiplicativo operadorRelacional
+%type <cent> tipoSimple operadorLogico operadorUnario operadorAditivo operadorAsignacion operadorIgualdad operadorIncremento operadorMultiplicativo operadorRelacional
 %type <cent> instruccionSeleccion
-%type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
+%type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria constante
   
 %%
 programa                    :  {dvar = 0; si = 0;}
                               ACOR_ secuenciaSentencias CCOR_
-                                { if (verTDS) verTdS(); }
+                                { if (verTDS) verTdS(); 
                                 emite(FIN, crArgNul(),crArgNul(),crArgNul());
+                                }
                             ;
 
 secuenciaSentencias         : sentencia
@@ -51,7 +53,7 @@ sentencia                   : declaracion
 
 declaracion                 : tipoSimple ID_ PYC_
                                 {
-                                  if( !insTdS($2, $1, dvar, -1) )
+                                  if( !insTdS($2, $1, dvar , -1) )
                                     yyerror("Variable ya definida");
                                   else 
                                     dvar += TALLA_TIPO_SIMPLE;
@@ -59,13 +61,15 @@ declaracion                 : tipoSimple ID_ PYC_
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
-                                  if( ! ($1 == $4))
+                                  if( ! ($1 == $4.tipo))
                                     yyerror("No se pudo realizar la asignación, tipos incompatibles");
                                   else
                                     if( ! insTdS($2, $1, dvar, -1) )
                                       yyerror("Variable ya definida");
                                     else
                                       dvar += TALLA_TIPO_SIMPLE;
+                                      SIMB simb = obtTdS($2);
+                                      emite(EASIG,crArgPos($4.desp) ,crArgNul(),crArgPos(simb.desp));
                                 }
 
                             | tipoSimple ID_ ALLAV_ CTE_ CLLAV_ PYC_
@@ -132,7 +136,7 @@ instruccion                 : ACOR_ CCOR_
                             ;
 
 listaInstrucciones          : instruccion
-                            | listaInstrucciones instrucciondesp
+                            | listaInstrucciones instruccion
                             ;
 /*****************************************************************************/
 instruccionesEntradaSalida  : READ_ APAR_ ID_ CPAR_ PYC_
@@ -173,11 +177,11 @@ instruccionIteracion        : WHILE_
                                 $<cent>$ = si;
                               }
                               APAR_ expresion CPAR_ 
-                                { if($3.tipo != T_ERROR)
-                                    if($3.tipo != T_LOGICO)
+                                { if($4.tipo != T_ERROR)
+                                    if($4.tipo != T_LOGICO)
                                       yyerror("La condición debe ser de tipo lógico");
                                   $<cent>$ = creaLans(si);
-                                  emite(EIGUAL, crArgPos($3.desp), crArgEnt(0), crArgEtq(-1));
+                                  emite(EIGUAL, crArgPos($4.desp), crArgEnt(0), crArgEtq(-1));
                                 } 
                               instruccion
                               {
@@ -209,11 +213,18 @@ expresion                   : expresionLogica
                                       if (! ((simb.tipo  == T_ENTERO && $3.tipo == T_ENTERO) || 
                                                 (simb.tipo  == T_LOGICO && $3.tipo == T_LOGICO))) 
                                           yyerror("Error de tipos en la 'instruccion de asignación'");
-                                      else{ $$.tipo = simb.tipo;
+                                      else{
+                                       $$.tipo = simb.tipo;
 
-                                      $$.desp = creaVarTemp();
-                                      emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos($$.desp));
-                                      emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos(simb.desp));
+                                        $$.desp = creaVarTemp();
+                                        if ($2 == EASIG){
+                                          
+                                          emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos(simb.desp));
+                                          emite(EASIG, crArgPos(simb.desp), crArgNul(),crArgPos($$.desp));
+                                        }else{
+                                          emite($2, crArgPos(simb.desp),crArgPos($3.desp),crArgPos(simb.desp));
+                                          emite(EASIG, crArgPos(simb.desp), crArgNul(),crArgPos($$.desp));
+                                        }
                                       }
                                     }
                                   }
@@ -304,7 +315,7 @@ expresionLogica             : expresionIgualdad
                                     }else{
                                       emite(ESUM, crArgPos($1.desp), crArgPos($3.desp), crArgPos($$.desp));
                                       emite(EMENEQ, crArgPos($$.desp), crArgEnt(1), crArgEtq(si + 2));
-                                      emite(EASIG crArgEnt(1), crArgNul(), crArgPos($$.desp));
+                                      emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.desp));
                                     }
                                   }
                                 }
@@ -413,8 +424,9 @@ expresionUnaria             : expresionSufija
                                     $$.desp = creaVarTemp();
                                     if($1 == NOT){
                                       emite(EDIF, crArgEnt(1),crArgPos($2.desp),crArgPos($$.desp));
-                                    }else{
-                                      emite($1, crArgEnt(0), crArgPos($2,desp),crArgPos($$.desp));
+                                    }
+                                    if($1 == MENOS){
+                                      emite(ESIG, crArgPos($2.desp), crArgNul(),crArgPos($$.desp));
                                     }
                                   }
                                 }
@@ -429,8 +441,10 @@ expresionUnaria             : expresionSufija
                                     yyerror("No se puede realizar una operación incremental sobre un no entero");
                                   else {
                                     $$.tipo = simb.tipo;
+
                                     $$.desp = creaVarTemp();
-                                    emite($1,crArgPos(simb.desp), crArgEnt(1),crArgPos($$.desp));
+                                    emite($1,crArgPos(simb.desp), crArgEnt(1),crArgPos(simb.desp));
+                                    emite(EASIG,crArgPos(simb.desp),crArgNul(),crArgPos($$.desp));
                                   }
                                 }
                               }
@@ -450,8 +464,10 @@ expresionSufija             : APAR_ expresion CPAR_
                                     yyerror("No se puede incrementar una variable no entera");
                                   else{
                                     $$.tipo = simb.tipo;
+
                                     $$.desp = creaVarTemp();
-                                    emite($2,crArgPos(simb.desp), crArgEnt(1),crArgPos($$.desp));
+                                    emite(EASIG,crArgPos(simb.desp),crArgNul(),crArgPos($$.desp));
+                                    emite($2,crArgPos(simb.desp), crArgEnt(1),crArgPos(simb.desp));
                                   }
 
                               }
@@ -466,8 +482,8 @@ expresionSufija             : APAR_ expresion CPAR_
                                     else{
                                       DIM dim = obtTdA(simb.ref);
                                       $$.tipo = dim.telem;
-                                      emite(EMULT, crArgEnt($3.desp), crArgEnt(TALLA_TIPO_SIMPLE,crArgPos($3.desp)));
-                                      $3.desp = creaVarTemp();
+
+                                      $$.desp = creaVarTemp();
                                       emite(EAV, crArgPos(simb.desp), crArgEnt($3.desp),crArgPos($$.desp));
                                     }
                                   }
@@ -497,18 +513,19 @@ expresionSufija             : APAR_ expresion CPAR_
                                       yyerror("Campo no definido");
                                     else{
                                       $$.tipo = camp.tipo;
+
                                       int desp = simb.desp + camp.desp;
                                       $$.desp = creaVarTemp();
-                                      emite(EASIG, crArgEnt(desp), crArgNul(), crArgPos($$.desp));
+                                      emite(EASIG, crArgPos(desp), crArgNul(), crArgPos($$.desp));
                                     }
                                   }
                                 }
                               }
                             | constante
                               {
-                                $$.tipo = $1;
+                                $$.tipo = $1.tipo;
                                 $$.desp = creaVarTemp();
-                                emite(EASIG, crArgPos($1), crArgNul(), crArgPos($$.desp));
+                                emite(EASIG, crArgPos($1.desp), crArgNul(), crArgPos($$.desp));
                               }
                             ;
 
@@ -516,21 +533,21 @@ expresionSufija             : APAR_ expresion CPAR_
 
 constante                   : CTE_
                                 {
-                                  $$ = T_ENTERO;
+                                  $$.tipo = T_ENTERO;
                                   $$.desp = creaVarTemp();
                                   emite(EASIG, crArgEnt($1), crArgNul(), crArgPos($$.desp));
                                 }
 
                             | TRUE_
                                 {
-                                  $$ = T_LOGICO;
+                                  $$.tipo = T_LOGICO;
                                   $$.desp = creaVarTemp();
                                   emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.desp));
                                 }
 
                             | FALSE_
                                 {
-                                  $$ = T_LOGICO;
+                                  $$.tipo = T_LOGICO;
                                   $$.desp = creaVarTemp();
                                   emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.desp));
                                 }
@@ -576,7 +593,7 @@ operadorIgualdad            : IGUALC_
                               }
                             | DIF_
                               {
-                                $$ = EDIF;
+                                $$ = EDIST;
                               }
                             ;
 
@@ -594,7 +611,7 @@ operadorRelacional          : MAYOR_
                               }
                             | MEIG_
                               {
-                                $$ = EMENEQ
+                                $$ = EMENEQ;
                               }
                             ;
 
@@ -624,11 +641,11 @@ operadorMultiplicativo      : POR_
 
 operadorUnario              : MAS_ 
                               {
-                                $$ = ESUM;
+                                $$ = MAS;
                               }
                             | MENOS_ 
                               {
-                                $$ = EDIF;
+                                $$ = MENOS;
                               }
                             | EXCL_
                               {

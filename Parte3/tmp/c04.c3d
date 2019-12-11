@@ -1,0 +1,46 @@
+  0 EASIG     i:  10  ,          ,  p:   3  
+  1 EASIG     p:   3  ,          ,  p:   4  
+  2 EASIG     i:  10  ,          ,  p:   5  
+  3 EASIG     p:   5  ,          ,  p:   6  
+  4 EASIG     p:   4  ,          ,  p:   7  
+  5 ESUM      p:   6  ,  p:   7  ,  p:   8  
+  6 EASIG     p:   8  ,          ,  p:   3  
+  7 EASIG     p:   3  ,          ,  p:   9  
+  8 EASIG     i:  10  ,          ,  p:  10  
+  9 EASIG     p:  10  ,          ,  p:  11  
+ 10 EDIF      i:   0  ,  p:  11  ,  p:  12  
+ 11 EASIG     p:   4  ,          ,  p:  13  
+ 12 EDIF      p:  12  ,  p:  13  ,  p:  14  
+ 13 EASIG     p:  14  ,          ,  p:   5  
+ 14 EASIG     p:   5  ,          ,  p:  15  
+ 15 EASIG     p:   4  ,          ,  p:  16  
+ 16 EASIG     i:   0  ,          ,  p:  17  
+ 17 EASIG     p:  17  ,          ,  p:  18  
+ 18 EASIG     i:   1  ,          ,  p:  19  
+ 19 EMAY      p:  16  ,  p:  18  ,  e:  21  
+ 20 EASIG     i:   0  ,          ,  p:  19  
+ 21 EIGUAL    p:  19  ,  i:   0  ,  i:  27  
+ 22 EASIG     i:   1  ,          ,  p:  20  
+ 23 EASIG     p:  20  ,          ,  p:  21  
+ 24 EASIG     p:  21  ,          ,  p:   4  
+ 25 EASIG     p:   4  ,          ,  p:  22  
+ 26 GOTOS             ,          ,  i:  31  
+ 27 EASIG     i:   0  ,          ,  p:  23  
+ 28 EASIG     p:  23  ,          ,  p:  24  
+ 29 EASIG     p:  24  ,          ,  p:   4  
+ 30 EASIG     p:   4  ,          ,  p:  25  
+ 31 EASIG     p:   4  ,          ,  p:  26  
+ 32 EIGUAL    p:  26  ,  i:   0  ,  i:  38  
+ 33 EASIG     p:   3  ,          ,  p:  27  
+ 34 EASIG     p:   5  ,          ,  p:  28  
+ 35 ESUM      p:  27  ,  p:  28  ,  p:  29  
+ 36 EWRITE            ,          ,  p:  29  
+ 37 GOTOS             ,          ,  i:  45  
+ 38 EASIG     i:   1  ,          ,  p:  30  
+ 39 EASIG     p:  30  ,          ,  p:  31  
+ 40 EASIG     p:   3  ,          ,  p:  32  
+ 41 EDIF      p:  31  ,  p:  32  ,  p:  33  
+ 42 EASIG     p:   5  ,          ,  p:  34  
+ 43 EDIF      p:  33  ,  p:  34  ,  p:  35  
+ 44 EWRITE            ,          ,  p:  35  
+ 45 FIN               ,          ,          
