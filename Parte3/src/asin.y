@@ -27,7 +27,7 @@
 
 %type <registro> listaCampos
 %type <cent> tipoSimple constante operadorLogico operadorUnario
-%type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelaiconal expresionSufija expresionUnaria
+%type <exp> expresion expresionAditiva expresionIgualdad expresionLogica expresionMultiplicativa expresionRelacional expresionSufija expresionUnaria
   
 %%
 programa                    :  {dvar = 0; si = 0;}
@@ -54,7 +54,7 @@ declaracion                 : tipoSimple ID_ PYC_
                                     yyerror("Variable ya definida");
                                   else 
                                     dvar += TALLA_TIPO_SIMPLE;
-                                }desp
+                                }/*desp*/
 
                             | tipoSimple ID_ IGU_ constante PYC_
                                 {
@@ -208,6 +208,10 @@ expresion                   : expresionLogica
                                                 (simb.tipo  == T_LOGICO && $3.tipo == T_LOGICO))) 
                                           yyerror("Error de tipos en la 'instruccion de asignación'");
                                       else $$.tipo = simb.tipo;
+
+                                      $$.desp = creaVarTemp();
+                                      emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos($$.desp));
+                                      emite(EASIG, crArgPos($3.desp), crArgNul(),crArgPos(simb.desp));
                                     }
                                   }
                                 }
@@ -228,6 +232,15 @@ expresion                   : expresionLogica
                                           yyerror("Tipo incompatible con los tipos del array");
                                         else{
                                           $$.tipo = dim.telem; 
+
+                                          $$.desp = creaVarTemp();
+                                          if($5 == EASIG){
+                                            emite(EVA,crArgPos(simb.desp) ,crArgPos($3.desp), crArgPos($6.desp));
+                                          }else{
+                                            emite(EAV, crArgPos(simb.desp), crArgPos($3.desp), crArgPos($$.desp));
+                                            emite($5, crArgPos($$.desp), crArgPos($6.desp), crArgPos($$.desp));
+                                            emite(EVA,crArgPos(simb.desp) ,crArgPos($3.desp), crArgPos($$.desp));
+                                          }
                                         }
                                       }
                                     }
@@ -252,6 +265,15 @@ expresion                   : expresionLogica
                                           yyerror("Tipo de campo y de elemento incompatibles");
                                         else{
                                           $$.tipo = camp.tipo; 
+
+                                          $$.desp = creaVarTemp();
+                                          int pos = camp.desp + simb.desp;
+                                          if($4 == EASIG){
+                                            emite(EASIG, crArgPos($5.desp), crArgNul(), crArgPos(pos));
+                                          }else{
+                                            emite($4, crArgPos(pos), crArgPos($5.desp), crArgPos(pos));
+                                          }
+                                          emite(EASIG,crArgPos(pos) ,crArgNul(), crArgPos($$.desp));
                                         }
                                       }
                                     }
@@ -273,17 +295,25 @@ expresionLogica             : expresionIgualdad
                                   }
                                   else{
                                     $$.tipo = T_LOGICO;
+                                    $$.desp = creaVarTemp();
+                                    if($2 == AND){
+                                      emite(EMULT, crArgPos($1.desp), crArgPos($3.desp), crArgPos($$.desp));
+                                    }else{
+                                      emite(ESUM, crArgPos($1.desp), crArgPos($3.desp), crArgPos($$.desp));
+                                      emite(EMENEQ, crArgPos($$.desp), crArgEnt(1), crArgEtq(si + 2));
+                                      emite(EASIG crArgEnt(1), crArgNul(), crArgPos($$.desp));
+                                    }
                                   }
                                 }
                               }
                             ;
 
-expresionIgualdad           : expresionRelaiconal
+expresionIgualdad           : expresionRelacional
                               {
                                 $$.desp = $1.desp;
                                 $$.tipo = $1.tipo;
                               }
-                            | expresionIgualdad operadorIgualdad expresionRelaiconal
+                            | expresionIgualdad operadorIgualdad expresionRelacional
                               { $$.tipo = T_ERROR;
                                 if($1.tipo != T_ERROR && $3.tipo != T_ERROR){
                                   if(!(($1.tipo == T_LOGICO && $3.tipo == T_LOGICO)||($1.tipo == T_ENTERO && $3.tipo == T_ENTERO))){
@@ -291,17 +321,21 @@ expresionIgualdad           : expresionRelaiconal
                                   }
                                   else{
                                     $$.tipo = T_LOGICO;
+                                    $$.desp = creaVarTemp();
+                                    emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.desp));
+                                    emite($2, crArgPos($1.desp),crArgPos($3.desp),crArgEtq(si + 2));
+                                    emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.desp));
                                   }
                                 }
                               }
                             ;
 
-expresionRelaiconal         : expresionAditiva
+expresionRelacional         : expresionAditiva
                               {
                                 $$.desp = $1.desp;
                                 $$.tipo = $1.tipo;
                               }
-                            | expresionRelaiconal operadorRelacional expresionAditiva
+                            | expresionRelacional operadorRelacional expresionAditiva
                               { $$.tipo = T_ERROR;
                                 if($1.tipo != T_ERROR && $3.tipo != T_ERROR){
                                   if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO) {
@@ -309,6 +343,11 @@ expresionRelaiconal         : expresionAditiva
                                   }
                                   else{
                                     $$.tipo = T_LOGICO;
+                                    
+                                    $$.desp = creaVarTemp();
+                                    emite(EASIG, crArgEnt(1), crArgNul(), crArgPos($$.desp));
+                                    emite($2, crArgPos($1.desp),crArgPos($3.desp),crArgEtq(si + 2));
+                                    emite(EASIG, crArgEnt(0), crArgNul(), crArgPos($$.desp));
                                   }
                                 }
                               }
@@ -486,9 +525,21 @@ operadorAsignacion          : IGU_
                                 $$ = EASIG;
                               }
                             | MASIG_
+                              {
+                                $$ = ESUM;
+                              }
                             | MENIG_
-                            | PORIG_
+                              {
+                                $$ = EDIF;
+                              }
+                            | PORIG_ 
+                              {
+                                $$ = EMULT;
+                              }
                             | DIVIG_
+                              {
+                                $$ = EDIVI;
+                              }
                             ;
 
 operadorLogico              : AND_
@@ -568,7 +619,13 @@ operadorUnario              : MAS_
                             ;
 
 operadorIncremento          : INCR_
+                              {
+                                $$ = ESUM;
+                              }
                             | DECR_
+                              {
+                                $$ = EDIF; 
+                              }
                             ;
 
 %%
