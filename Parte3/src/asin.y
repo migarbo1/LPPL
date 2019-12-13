@@ -89,7 +89,7 @@ declaracion                 : tipoSimple ID_ PYC_
 
                             | STRUCT_ ACOR_ listaCampos CCOR_ ID_ PYC_
                                 {
-                                  if(! insTdS($5, T_RECORD, $3.talla, $3.ref))
+                                  if(! insTdS($5, T_RECORD, dvar, $3.ref))
                                     yyerror("Identificador repetido");
                                     else
                                       dvar += $3.talla;
@@ -484,7 +484,7 @@ expresionSufija             : APAR_ expresion CPAR_
                                       $$.tipo = dim.telem;
 
                                       $$.desp = creaVarTemp();
-                                      emite(EAV, crArgPos(simb.desp), crArgEnt($3.desp),crArgPos($$.desp));
+                                      emite(EAV, crArgPos(simb.desp), crArgPos($3.desp),crArgPos($$.desp));
                                     }
                                   }
                                 }

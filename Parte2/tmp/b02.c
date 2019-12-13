@@ -1,7 +1,7 @@
 // Ejemplo sobre registros: 5 errores
 {
   struct { int  a1; bool a2; int  a1; } a;
-  int  b;   bool c;
+  int  b = -1;   bool c;
   struct {
     int  d1;
     bool d2;

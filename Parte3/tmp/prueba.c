@@ -1,8 +1,7 @@
 {
-  int s[1];
-  struct { int a; bool b; int c; } r;
-  int x;
-
-  read (x);r.a = 10+x; r.c = -10-x;  
-  print(x);
+bool a[1];
+int x ;
+x = 0;
+a[0] = true;
+if(a[x]){print(1);}else{print(0);}
 }
