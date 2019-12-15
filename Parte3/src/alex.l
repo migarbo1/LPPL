@@ -17,7 +17,7 @@
 %option nounput
 %option yylineno
 
-delimitador    [ \t\n]+
+delimitador    [ \t]+
 digito         [0-9]
 entero         {digito}+
 flotante       {entero}*[.]{entero}+|{entero}+[.]{entero}*
@@ -26,6 +26,7 @@ variable       {letra}({letra}|{digito}|[_])*
 comentario     \/\/.*$
 
 %%
+"\n"				{if (verbosidad) { ECHO; printf("  %d.- ", yylineno); }}
 {delimitador}   { if (verbosidad) ECHO; }
 {comentario}	  { if (verbosidad) ECHO; } /*preguntar*/
 "."             { retornar (PUNTO_);    }
